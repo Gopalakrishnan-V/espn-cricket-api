@@ -1,0 +1,231 @@
+const puppeteer = require("puppeteer");
+const { getNewPage } = require("./utils/PageHelper");
+const {
+  TEAMS_URL,
+  FORMATS,
+  FORMATS_V2,
+  BATTING_ATTRIBUTES,
+  BOWLING_ATTRIBUTES
+} = require("./utils/Constants");
+
+let browser = null;
+
+const espn = {
+  init: (config = {}) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        /* Creating a new browser instance */
+        browser = await puppeteer.launch(config);
+
+        resolve();
+      } catch (e) {
+        reject(e);
+      }
+    });
+  },
+  getTeams: () => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const page = await getNewPage(browser);
+        await page.goto(TEAMS_URL);
+        const teams = await page.$$eval(
+          "div.article-body > p > a[href*='/team']",
+          elements =>
+            elements.map(element => {
+              /* Each element represents a country Ex: India, Australia */
+              const url = element.getAttribute("href");
+
+              const [id] = url.match(/[0-9]+/);
+              const slug = url.replace(/.*[0-9]\//, "").replace("/", "");
+              const name = element.textContent;
+              return { id, slug, name };
+            })
+        );
+        await page.close();
+        resolve(teams);
+      } catch (e) {
+        reject(e);
+      }
+    });
+  },
+  getTeamPlayers: ({ teamID, teamSlug }) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const page = await getNewPage(browser);
+        await page.goto(
+          `http://www.espncricinfo.com/${teamSlug}/content/player/country.html?country=${teamID}`
+        );
+        const result = await page.$$eval(
+          "table.playersTable > tbody",
+          (tbodies, FORMATS) => {
+            const result = {};
+            for (let i in tbodies) {
+              /* Block containing players of one format */
+              const tbody = tbodies[i];
+              const players = [];
+
+              let trs = Array.from(tbody.children);
+              trs = trs.filter(tr => tr.childElementCount);
+              trs.map(tr => {
+                /* Each tr contains three tds(players) */
+                const tds = Array.from(tr.children);
+
+                tds.map(td => {
+                  /* Each td represents a player */
+                  const name = td.textContent;
+                  const url = td.firstElementChild.getAttribute("href");
+                  const [id] = url.match(/[0-9]+/);
+                  players.push({ id, name });
+                });
+              });
+
+              /* FORMATS is enum containing all, test, odi, etc., */
+              const formatName = FORMATS[i];
+              result[formatName] = players;
+            }
+            return result;
+          },
+          FORMATS
+        );
+        await page.close();
+        resolve({ teamID, teamSlug, players: result });
+      } catch (e) {
+        reject(e);
+      }
+    });
+  },
+  getPlayerDetails: ({ playerID, teamSlug }) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const page = await getNewPage(browser);
+        await page.goto(
+          `http://www.espncricinfo.com/${teamSlug}/content/player/${playerID}.html`
+        );
+        const name = await page.$eval("div.ciPlayernametxt > div > h1", el =>
+          el.textContent.trim()
+        );
+        const teamName = await page.$eval("h3.PlayersSearchLink > b", el =>
+          el.textContent.trim()
+        );
+        const avatar = await page.$eval(
+          "img[src*='/inline/content/image']",
+          el => el.currentSrc
+        );
+
+        const {
+          fullName,
+          born,
+          majorTeams,
+          playingRole,
+          battingStyle,
+          bowlingStyle
+        } = await page.$$eval("div > p.ciPlayerinformationtxt", els => {
+          return {
+            fullName: els[0].lastElementChild.textContent.trim(),
+            born: els[1].lastElementChild.textContent.trim(),
+            majorTeams: els[3].textContent
+              .replace("Major teams", "")
+              .trim()
+              .split(","),
+            playingRole: els[4].lastElementChild.textContent.trim(),
+            battingStyle: els[5].lastElementChild.textContent.trim(),
+            bowlingStyle: els[6].lastElementChild.textContent.trim()
+          };
+        });
+
+        const batting = await page.$$eval(
+          "table.engineTable:nth-of-type(1) > tbody > tr",
+          (trs, FORMATS_V2, BATTING_ATTRIBUTES) => {
+            const result = {};
+            for (let i in trs) {
+              const formatStats = {};
+
+              /* Each tr represents a format */
+              const tr = trs[i];
+
+              /* Each td represents a column such as mat, inns, etc., */
+              const tds = Array.from(tr.children).filter(
+                td => td.className === ""
+              );
+
+              tds.map((td, tdIndex) => {
+                const attribute = BATTING_ATTRIBUTES[tdIndex];
+                const { key, type } = attribute;
+
+                let textContent = td.textContent.trim();
+                formatStats[key] =
+                  type === "string" ? textContent : Number(textContent);
+              });
+
+              result[FORMATS_V2[i]] = formatStats;
+            }
+            return result;
+          },
+          FORMATS_V2,
+          BATTING_ATTRIBUTES
+        );
+
+        const bowling = await page.$$eval(
+          "table.engineTable:nth-of-type(2) > tbody > tr",
+          (trs, FORMATS_V2, BOWLING_ATTRIBUTES) => {
+            const result = {};
+            for (let i in trs) {
+              const formatStats = {};
+
+              /* Each tr represents a format */
+              const tr = trs[i];
+
+              /* Each td represents a column such as mat, inns, etc., */
+              const tds = Array.from(tr.children).filter(
+                td => td.className === ""
+              );
+
+              tds.map((td, tdIndex) => {
+                const attribute = BOWLING_ATTRIBUTES[tdIndex];
+                const { key, type } = attribute;
+
+                let textContent = td.textContent.trim();
+                formatStats[key] =
+                  type === "string" ? textContent : Number(textContent);
+              });
+
+              result[FORMATS_V2[i]] = formatStats;
+            }
+            return result;
+          },
+          FORMATS_V2,
+          BOWLING_ATTRIBUTES
+        );
+
+        await page.close();
+        resolve({
+          name,
+          teamName,
+          avatar,
+          fullName,
+          born,
+          majorTeams,
+          playingRole,
+          battingStyle,
+          bowlingStyle,
+          batting,
+          bowling
+        });
+      } catch (e) {
+        reject(e);
+      }
+    });
+  },
+  close: () => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        await browser.close();
+        resolve(true);
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
+};
+
+module.exports = espn;

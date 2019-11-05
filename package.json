@@ -1,0 +1,21 @@
+{
+  "name": "espn-cricket-api",
+  "version": "1.0.0",
+  "description": "Unofficial APIs of espncricinfo.com",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "espn",
+    "apis",
+    "cricket",
+    "player",
+    "stats"
+  ],
+  "author": "Gopalakrishnan V",
+  "license": "ISC",
+  "dependencies": {
+    "puppeteer": "^2.0.0"
+  }
+}
