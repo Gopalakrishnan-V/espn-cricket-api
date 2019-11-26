@@ -1,12 +1,14 @@
 const puppeteer = require("puppeteer");
 const { getNewPage } = require("./utils/PageHelper");
 const {
+  BASE_URL,
   TEAMS_URL,
   FORMATS,
   FORMATS_V2,
   BATTING_ATTRIBUTES,
   BOWLING_ATTRIBUTES
 } = require("./utils/Constants");
+const { getTeamSlugFromResult } = require("./utils/TextHelper");
 
 let browser = null;
 
@@ -15,6 +17,12 @@ const espn = {
     return new Promise(async (resolve, reject) => {
       try {
         /* Creating a new browser instance */
+        config.headless = config.headless || true;
+        config.devtools = config.devtools || false;
+        config.args = config.args || [
+          "--no-sandbox",
+          "--disable-setuid-sandbox"
+        ];
         browser = await puppeteer.launch(config);
 
         resolve();
@@ -48,7 +56,7 @@ const espn = {
       }
     });
   },
-  getTeamPlayers: ({ teamID, teamSlug }) => {
+  getTeamPlayers: ({ teamID, teamSlug = "ci" }) => {
     return new Promise(async (resolve, reject) => {
       try {
         const page = await getNewPage(browser);
@@ -94,7 +102,7 @@ const espn = {
       }
     });
   },
-  getPlayerDetails: ({ playerID, teamSlug }) => {
+  getPlayerDetails: ({ playerID, teamSlug = "ci" }) => {
     return new Promise(async (resolve, reject) => {
       try {
         const page = await getNewPage(browser);
@@ -126,7 +134,8 @@ const espn = {
             majorTeams: els[3].textContent
               .replace("Major teams", "")
               .trim()
-              .split(","),
+              .split(",")
+              .map(majorTeam => majorTeam.trim()),
             playingRole: els[4].lastElementChild.textContent.trim(),
             battingStyle: els[5].lastElementChild.textContent.trim(),
             bowlingStyle: els[6].lastElementChild.textContent.trim()
@@ -211,6 +220,43 @@ const espn = {
           batting,
           bowling
         });
+      } catch (e) {
+        reject(e);
+      }
+    });
+  },
+  search: ({ query, limit }) => {
+    query = query || "";
+    limit = limit || 5;
+    return new Promise(async (resolve, reject) => {
+      try {
+        const page = await getNewPage(browser);
+        await page.goto(BASE_URL);
+        const result = await page.evaluate(
+          async (query, limit) => {
+            try {
+              const response = await fetch(
+                `https://site.api.espn.com/apis/common/v3/search?sport=cricket&query=${query}&limit=${limit}&type=player&mode=prefix&lang=en&region=in&site=espncricinfo&section=cricinfo`
+              );
+              const text = await response.json();
+              return text;
+            } catch (e) {
+              return e;
+            }
+          },
+          query,
+          limit
+        );
+
+        await page.close();
+        if (result.items) {
+          result.items = result.items.map(item => {
+            return { ...item, teamSlug: getTeamSlugFromResult(item) };
+          });
+          resolve(result.items);
+        } else {
+          reject(new Error(result.message));
+        }
       } catch (e) {
         reject(e);
       }
