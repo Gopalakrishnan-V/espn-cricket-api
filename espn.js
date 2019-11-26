@@ -225,9 +225,7 @@ const espn = {
       }
     });
   },
-  search: ({ query, limit }) => {
-    query = query || "";
-    limit = limit || 5;
+  search: ({ query = "", limit = 5 }) => {
     return new Promise(async (resolve, reject) => {
       try {
         const page = await getNewPage(browser);
