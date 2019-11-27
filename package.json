@@ -17,5 +17,10 @@
   "license": "ISC",
   "dependencies": {
     "puppeteer": "^2.0.0"
+  },
+  "homepage": "https://github.com/gopalakrishnan-v/espn-cricket-api",
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/gopalakrishnan-v/espn-cricket-api.git"
   }
 }
