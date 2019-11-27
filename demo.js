@@ -3,7 +3,7 @@ const espn = require("./espn");
 
 (async () => {
   try {
-    await espn.init({ headless: false, devtools: false });
+    await espn.init({ headless: true, devtools: false });
 
     // 1. getTeams
     // const teams = await espn.getTeams();
