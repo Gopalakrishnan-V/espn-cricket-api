@@ -17,8 +17,8 @@ const espn = {
     return new Promise(async (resolve, reject) => {
       try {
         /* Creating a new browser instance */
-        config.headless = config.headless || true;
-        config.devtools = config.devtools || false;
+        config.headless = true;
+        config.devtools = false;
         config.args = config.args || [
           "--no-sandbox",
           "--disable-setuid-sandbox"
@@ -115,10 +115,13 @@ const espn = {
         const teamName = await page.$eval("h3.PlayersSearchLink > b", el =>
           el.textContent.trim()
         );
-        const avatar = await page.$eval(
-          "img[src*='/inline/content/image']",
-          el => el.currentSrc
-        );
+
+        const avatar = await page.evaluate(async () => {
+          const el = await document.querySelector(
+            "img[src*='/inline/content/image']"
+          );
+          return el ? el.currentSrc : null;
+        });
 
         const {
           fullName,
@@ -229,7 +232,6 @@ const espn = {
     return new Promise(async (resolve, reject) => {
       try {
         const page = await getNewPage(browser);
-        await page.goto(BASE_URL);
         const result = await page.evaluate(
           async (query, limit) => {
             try {

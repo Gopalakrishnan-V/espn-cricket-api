@@ -4,14 +4,11 @@ const getNewPage = async browser => {
   // page.on("console", console.log);
 
   page.on("request", req => {
-    if (req.resourceType() === "image") {
-      req.abort();
-    } else if (
-      req.resourceType() === "stylesheet" ||
-      req.resourceType() === "font"
-    ) {
+    const abortedTypes = ["image", "stylesheet", "font", "script", "xhr"];
+    if (abortedTypes.includes(req.resourceType())) {
       req.abort();
     } else {
+      // console.log(page.url(), req.url());
       req.continue();
     }
   });

@@ -4,6 +4,7 @@ const espn = require("./espn");
 (async () => {
   try {
     await espn.init({ headless: true, devtools: false });
+    // console.time("request");
 
     // 1. getTeams
     // const teams = await espn.getTeams();
@@ -27,6 +28,7 @@ const espn = require("./espn");
     // const searchResults = await espn.search({ query: "tendulkar", limit: 2 });
     // console.log(searchResults);
 
+    // console.timeEnd("request");
     await espn.close();
   } catch (e) {
     await espn.close();

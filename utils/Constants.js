@@ -1,6 +1,6 @@
 const BASE_URL = "http://www.espncricinfo.com/";
 const TEAMS_URL =
-  "http://www.espncricinfo.com/story/_/id/18791072/all-cricket-teams-index";
+  "https://www.espncricinfo.com/story/_/id/18791072/all-cricket-teams-index";
 
 const FORMATS = ["all", "test", "odi", "t20", "contract"];
 const FORMATS_V2 = ["tests", "odis", "t20is", "firstClass", "listA", "t20s"];
