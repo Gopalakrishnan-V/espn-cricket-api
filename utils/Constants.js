@@ -3,7 +3,15 @@ const TEAMS_URL =
   "https://www.espncricinfo.com/story/_/id/18791072/all-cricket-teams-index";
 
 const FORMATS = ["all", "test", "odi", "t20", "contract"];
-const FORMATS_V2 = ["tests", "odis", "t20is", "firstClass", "listA", "t20s"];
+const FORMATS_V2_MAP = {
+  Tests: "tests",
+  ODIs: "odis",
+  T20Is: "t20is",
+  "First-class": "firstClass",
+  "List A": "listA",
+  T20s: "t20s"
+};
+
 const BATTING_ATTRIBUTES = [
   { key: "matches", type: "number" },
   { key: "innings", type: "number" },
@@ -41,7 +49,7 @@ module.exports = {
   BASE_URL,
   TEAMS_URL,
   FORMATS,
-  FORMATS_V2,
+  FORMATS_V2_MAP,
   BATTING_ATTRIBUTES,
   BOWLING_ATTRIBUTES
 };

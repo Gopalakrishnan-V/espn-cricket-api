@@ -4,7 +4,7 @@ const {
   BASE_URL,
   TEAMS_URL,
   FORMATS,
-  FORMATS_V2,
+  FORMATS_V2_MAP,
   BATTING_ATTRIBUTES,
   BOWLING_ATTRIBUTES
 } = require("./utils/Constants");
@@ -147,13 +147,19 @@ const espn = {
 
         const batting = await page.$$eval(
           "table.engineTable:nth-of-type(1) > tbody > tr",
-          (trs, FORMATS_V2, BATTING_ATTRIBUTES) => {
+          (trs, FORMATS_V2_MAP, BATTING_ATTRIBUTES) => {
             const result = {};
             for (let i in trs) {
               const formatStats = {};
 
               /* Each tr represents a format */
               const tr = trs[i];
+
+              /* Format Label. Ex: Tests, ODIs, T20Is, First-class, List A, T20s */
+              const formatLabel = tr.children[0].textContent;
+              const formatKey = formatLabel
+                ? FORMATS_V2_MAP[formatLabel]
+                : null;
 
               /* Each td represents a column such as mat, inns, etc., */
               const tds = Array.from(tr.children).filter(
@@ -169,23 +175,31 @@ const espn = {
                   type === "string" ? textContent : Number(textContent);
               });
 
-              result[FORMATS_V2[i]] = formatStats;
+              if (formatKey) {
+                result[formatKey] = formatStats;
+              }
             }
             return result;
           },
-          FORMATS_V2,
+          FORMATS_V2_MAP,
           BATTING_ATTRIBUTES
         );
 
         const bowling = await page.$$eval(
           "table.engineTable:nth-of-type(2) > tbody > tr",
-          (trs, FORMATS_V2, BOWLING_ATTRIBUTES) => {
+          (trs, FORMATS_V2_MAP, BOWLING_ATTRIBUTES) => {
             const result = {};
             for (let i in trs) {
               const formatStats = {};
 
               /* Each tr represents a format */
               const tr = trs[i];
+
+              /* Format Label. Ex: Tests, ODIs, T20Is, First-class, List A, T20s */
+              const formatLabel = tr.children[0].textContent;
+              const formatKey = formatLabel
+                ? FORMATS_V2_MAP[formatLabel]
+                : null;
 
               /* Each td represents a column such as mat, inns, etc., */
               const tds = Array.from(tr.children).filter(
@@ -201,11 +215,13 @@ const espn = {
                   type === "string" ? textContent : Number(textContent);
               });
 
-              result[FORMATS_V2[i]] = formatStats;
+              if (formatKey) {
+                result[formatKey] = formatStats;
+              }
             }
             return result;
           },
-          FORMATS_V2,
+          FORMATS_V2_MAP,
           BOWLING_ATTRIBUTES
         );
 
