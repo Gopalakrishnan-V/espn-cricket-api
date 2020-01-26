@@ -163,7 +163,7 @@ const espn = {
 
               /* Each td represents a column such as mat, inns, etc., */
               const tds = Array.from(tr.children).filter(
-                td => td.className === ""
+                td => td.className === "" || td.className === "padAst"
               );
 
               tds.map((td, tdIndex) => {
@@ -203,7 +203,7 @@ const espn = {
 
               /* Each td represents a column such as mat, inns, etc., */
               const tds = Array.from(tr.children).filter(
-                td => td.className === ""
+                td => td.className === "" || td.className === "padAst"
               );
 
               tds.map((td, tdIndex) => {

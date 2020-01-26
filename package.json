@@ -1,6 +1,6 @@
 {
   "name": "espn-cricket-api",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Unofficial APIs of espncricinfo.com",
   "main": "index.js",
   "scripts": {
